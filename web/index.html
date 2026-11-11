@@ -142,6 +142,24 @@
   </section>
 
   <section>
+    <h2>LLM 配置（009 Q3 单点网关）</h2>
+    <div class="log" id="llmStatus" style="margin-bottom:8px">加载中…</div>
+    <form class="narr" id="llmForm" style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <select id="llmProvider">
+          <option value="mock">mock（零网络，测试用）</option>
+          <option value="openai-compatible">openai-compatible</option>
+        </select>
+        <input id="llmModel" placeholder="model，缺省 gpt-4o-mini" />
+      </div>
+      <input id="llmBaseUrl" placeholder="BASE_URL，如 https://api.openai.com/v1 或 http://127.0.0.1:11434/v1" />
+      <input id="llmApiKey" type="password" placeholder="API_KEY（打码存储，提交后本地可见）" />
+      <button type="submit">保存并热切换</button>
+      <div class="log" id="llmLog"></div>
+    </form>
+  </section>
+
+  <section>
     <h2>缺席简报（rumor 层 description）</h2>
     <form class="narr" id="briefForm">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
@@ -296,6 +314,44 @@ document.getElementById("narrForm").onsubmit = async (e) => {
     refresh();
   } catch (err) { log("narrative 失败：" + err.message, true); }
   finally { btn.disabled = false; }
+};
+
+async function loadLlmConfig() {
+  try {
+    const r = await api("/api/config/llm");
+    document.getElementById("llmStatus").textContent = "当前：" + (r.current.provider ?? "unknown") + " · live " + r.live;
+    if (r.current.provider === "openai-compatible") {
+      document.getElementById("llmProvider").value = "openai-compatible";
+      document.getElementById("llmBaseUrl").value = r.current.baseUrl || "";
+      document.getElementById("llmApiKey").value = r.current.apiKey || "";
+      document.getElementById("llmModel").value = r.current.model && r.current.model !== "gpt-4o-mini" ? r.current.model : "";
+    }
+  } catch { /* server not ready */ }
+}
+loadLlmConfig();
+setInterval(loadLlmConfig, 10000);
+
+document.getElementById("llmForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const btn = e.target.querySelector("button");
+  btn.disabled = true;
+  try {
+    const r = await api("/api/config/llm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        provider: document.getElementById("llmProvider").value,
+        baseUrl: document.getElementById("llmBaseUrl").value.trim() || undefined,
+        apiKey: document.getElementById("llmApiKey").value.trim() || undefined,
+        model: document.getElementById("llmModel").value.trim() || undefined,
+      }),
+    });
+    document.getElementById("llmLog").innerHTML = '<div class="ok">已切换 → ' + r.live + "</div>";
+    refresh();
+  } catch (err) {
+    document.getElementById("llmLog").innerHTML = '<div class="err">' + err.message + "</div>";
+  }
+  btn.disabled = false;
 };
 
 document.getElementById("briefForm").onsubmit = async (e) => {

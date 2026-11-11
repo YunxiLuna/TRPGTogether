@@ -6,3 +6,6 @@ dist/
 
 # node
 node_modules/
+
+# local env (LLM keys etc.) — keep out of git
+.env

@@ -12,11 +12,15 @@ import { buildPanelView } from "../knownset.js";
 import { buildAbsenceBriefing } from "../briefing.js";
 import { generateNarrative, classifyNarrativeConflict } from "../narrative.js";
 import { providerFromEnv, createLlmProvider, type LlmProvider } from "../llm/types.js";
+import { loadDotEnv, saveDotEnv } from "../env.js";
+
+// 从项目根 .env 加载 LLM 配置（不覆盖已设的进程环境变量）
+loadDotEnv();
 
 const store = new LedgerStore();
 
 // 009 Q3：服务器 1 处 LLM 网关（单房间共享缓存单点）
-const llm: LlmProvider = createLlmProvider(providerFromEnv());
+let llm: LlmProvider = createLlmProvider(providerFromEnv());
 console.log(`LLM provider: ${llm.name}`);
 store.registerRole("GM");
 store.registerRole("A");
@@ -152,6 +156,39 @@ const server = http.createServer((req, res) => {
       }
     }
 
+    // LLM 配置：GET 读当前（key 打码）；POST 持久化到 .env 并热切换 provider（009 Q3 单点配置）
+    if (path === "/api/config/llm" && req.method === "GET") {
+      const cur = providerFromEnv();
+      const masked = cur.kind === "openai-compatible"
+        ? { provider: "openai-compatible", baseUrl: cur.baseUrl, apiKey: cur.apiKey ? cur.apiKey.slice(0, 4) + "…" + cur.apiKey.slice(-4) : "", model: cur.model ?? "gpt-4o-mini" }
+        : { provider: "mock" };
+      return json({ ok: true, current: masked, live: llm.name });
+    }
+
+    if (path === "/api/config/llm" && req.method === "POST") {
+      try {
+        const data = JSON.parse(body || "{}");
+        const updates: Record<string, string> = {};
+        if (data.provider === "openai-compatible") {
+          updates.TRPG_LLM_PROVIDER = "openai-compatible";
+          updates.TRPG_LLM_API_KEY = String(data.apiKey ?? "");
+          updates.TRPG_LLM_BASE_URL = String(data.baseUrl ?? "https://api.openai.com/v1");
+          if (data.model) updates.TRPG_LLM_MODEL = String(data.model);
+        } else if (data.provider === "mock") {
+          updates.TRPG_LLM_PROVIDER = "mock";
+        } else {
+          return json({ ok: false, error: 'provider 须为 "mock" 或 "openai-compatible"' }, 400);
+        }
+        saveDotEnv(updates);
+        for (const [k, v] of Object.entries(updates)) process.env[k] = v;
+        llm = createLlmProvider(providerFromEnv());
+        console.log("LLM provider 热切换 →", llm.name);
+        return json({ ok: true, live: llm.name });
+      } catch (e) {
+        return json({ ok: false, error: (e as Error).message }, 400);
+      }
+    }
+
     // 叙事提议查询：GET /api/proposals?role=A
     if (path === "/api/proposals" && req.method === "GET") {
       const qs = new URL(req.url ?? "", "http://localhost").searchParams;
@@ -167,7 +204,7 @@ const server = http.createServer((req, res) => {
       schema_version: schema.schema_version,
       roles: store.roles,
       seq: store.seq,
-      endpoints: ["/api/panel/:role", "/api/briefing/:role", "/api/settle", "/api/ledger", "/api/narrative/:role", "/api/classify", "/api/proposals"],
+      endpoints: ["/api/panel/:role", "/api/briefing/:role", "/api/settle", "/api/ledger", "/api/narrative/:role", "/api/classify", "/api/proposals", "/api/config/llm"],
       llm: llm.name,
     });
     })();
