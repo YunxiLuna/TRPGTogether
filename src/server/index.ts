@@ -106,7 +106,11 @@ const server = http.createServer((req, res) => {
     if (nm && req.method === "POST") {
       try {
         const data = JSON.parse(body || "{}");
-        const proposal = await generateNarrative(llm, store, nm[1], data.worldbookSlice);
+        const proposal = await generateNarrative(llm, store, nm[1], {
+          factRef: data.fact_ref,
+          value: data.value,
+          worldbookSlice: data.worldbookSlice,
+        });
         const entry = store.addProposal({
           role: proposal.role,
           narrative: proposal.narrative,

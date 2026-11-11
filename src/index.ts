@@ -5,6 +5,6 @@ export { settle, arbitrate, detectWorldbookConflict } from "./interpreter.js";
 export { buildPanelView, buildPanelState } from "./knownset.js";
 export { buildAbsenceBriefing } from "./briefing.js";
 export { generateNarrative, classifyNarrativeConflict } from "./narrative.js";
-export type { NarrativeProposal } from "./narrative.js";
+export type { NarrativeProposal, NarrativeInput } from "./narrative.js";
 export { createLlmProvider, providerFromEnv, MockProvider, OpenAiCompatibleProvider } from "./llm/index.js";
 export * from "./types.js";

@@ -24,11 +24,20 @@ export interface NarrativeProposal {
  * 喂：角色 KnownSet 裁剪后的事件 + schema 可见子集 + 世界书三级锚切片
  * 产出：世界观叙事 + 可选提议数值（只写 proposals，不改已结算值）
  */
+export interface NarrativeInput {
+  /** 指向 schema 的量纲/事实名（喂给叙事 LLM 的 fact_ref） */
+  factRef?: string;
+  /** 叙事 LLM 可参考的数值（喂给叙事 LLM 的 value，仅示意不结算） */
+  value?: unknown;
+  /** 世界书三级锚切片（裁剪后，009 Q3 缓存单点） */
+  worldbookSlice?: string;
+}
+
 export async function generateNarrative(
   llm: LlmProvider,
   store: LedgerStore,
   role: string,
-  worldbookSlice?: string,
+  input: NarrativeInput = {},
 ): Promise<NarrativeProposal> {
   const ks = store.getKnownSet(role);
   // 裁剪上下文（009 Q3 缓存单点：KnownSet 裁剪后的事件全在服务器内存）
@@ -42,9 +51,9 @@ export async function generateNarrative(
   const userMsg =
     "角色: " + role + "\n" +
     "已知事件:\n" + (eventLines || "  (空)") + "\n" +
-    (worldbookSlice ? "世界书切片:\n" + worldbookSlice + "\n" : "") +
-    "fact_ref: 突破成功率\n" +
-    "value: 混合总成功率";
+    (input.worldbookSlice ? "世界书切片:\n" + input.worldbookSlice + "\n" : "") +
+    (input.factRef ? "fact_ref: " + input.factRef + "\n" : "") +
+    (input.value !== undefined ? "value: " + JSON.stringify(input.value) : "");
 
   const res = await llm.complete([
     { role: "system", content: systemMsg },

@@ -26,7 +26,7 @@ test("generateNarrative：mock provider 下全链路（proposals partition，不
   const llm = new MockProvider(42);
 
   const before = store.export();
-  const proposal = await generateNarrative(llm, store, "A");
+  const proposal = await generateNarrative(llm, store, "A", { factRef: "突破成功率", value: "混合总成功率" });
 
   // 叙事文案非空
   assert.ok(proposal.narrative.length > 0, "narrative 非空");
@@ -56,7 +56,7 @@ test("getProposals：按 role 过滤", async () => {
   const store = freshStore();
   const llm = new MockProvider(7);
 
-  const p1 = await generateNarrative(llm, store, "A");
+  const p1 = await generateNarrative(llm, store, "A", { factRef: "悟性" });
   store.addProposal({
     role: p1.role,
     narrative: p1.narrative,
@@ -64,7 +64,7 @@ test("getProposals：按 role 过滤", async () => {
     usage: p1.usage,
   });
 
-  const p2 = await generateNarrative(llm, store, "B");
+  const p2 = await generateNarrative(llm, store, "B", { factRef: "气运" });
   store.addProposal({
     role: p2.role,
     narrative: p2.narrative,
@@ -81,7 +81,7 @@ test("getProposals：按 role 过滤", async () => {
 test("export/restore：proposals partition 随存档恢复", async () => {
   const store = freshStore();
   const llm = new MockProvider(99);
-  const p = await generateNarrative(llm, store, "A");
+  const p = await generateNarrative(llm, store, "A", { factRef: "悟性" });
   store.addProposal({
     role: p.role,
     narrative: p.narrative,
