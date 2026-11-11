@@ -48,6 +48,13 @@ setTimeout(async () => {
     const lg = await get("http://127.0.0.1:54272/api/ledger");
     const parsed = JSON.parse(lg.body);
     console.log("LEDGER: events=" + parsed.events.length + " seq=" + parsed.seqCounter);
+    // 009 Q3 叙事层全链路：叙事 LLM→proposals partition
+    const na = await post("http://127.0.0.1:54272/api/narrative/A", {});
+    console.log("NARRATIVE/A:", na.status, na.body.slice(0, 400));
+    const pr = await get("http://127.0.0.1:54272/api/proposals?role=A");
+    console.log("PROPOSALS/A:", pr.status, pr.body.slice(0, 300));
+    const cl = await post("http://127.0.0.1:54272/api/classify", { first: { actor: "A", fact_ref: "悟性", value: 100 }, second: { actor: "B", fact_ref: "悟性", value: 200 } });
+    console.log("CLASSIFY:", cl.status, cl.body.slice(0, 300));
   } catch (e) {
     console.error("FAIL:", e);
   }

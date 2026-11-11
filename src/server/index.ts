@@ -9,8 +9,14 @@ import { parseSchema, type SchemaDef } from "../index.js";
 import { settle } from "../interpreter.js";
 import { buildPanelView } from "../knownset.js";
 import { buildAbsenceBriefing } from "../briefing.js";
+import { generateNarrative, classifyNarrativeConflict } from "../narrative.js";
+import { providerFromEnv, createLlmProvider, type LlmProvider } from "../llm/types.js";
 
 const store = new LedgerStore();
+
+// 009 Q3：服务器 1 处 LLM 网关（单房间共享缓存单点）
+const llm: LlmProvider = createLlmProvider(providerFromEnv());
+console.log(`LLM provider: ${llm.name}`);
 store.registerRole("GM");
 store.registerRole("A");
 store.registerRole("B");
@@ -47,6 +53,7 @@ const server = http.createServer((req, res) => {
   let body = "";
   req.on("data", (c: Buffer) => (body += c));
   req.on("end", () => {
+    void (async () => {
     const json = (o: unknown, status = 200) => {
       res.writeHead(status, { "Content-Type": "application/json" });
       res.end(JSON.stringify(o, null, 2));
@@ -94,13 +101,52 @@ const server = http.createServer((req, res) => {
       return json(store.export());
     }
 
+    // 009 Q3 叙事层端点：POST /api/narrative/:role（叙事 LLM 主调用→proposals partition）
+    const nm = path.match(/^\/api\/narrative\/([A-Za-z0-9_]+)$/);
+    if (nm && req.method === "POST") {
+      try {
+        const data = JSON.parse(body || "{}");
+        const proposal = await generateNarrative(llm, store, nm[1], data.worldbookSlice);
+        const entry = store.addProposal({
+          role: proposal.role,
+          narrative: proposal.narrative,
+          suggested_value: proposal.suggested_value ?? undefined,
+          provider: proposal.provider,
+          usage: proposal.usage,
+        });
+        return json({ ok: true, proposal: entry });
+      } catch (e) {
+        return json({ ok: false, error: (e as Error).message }, 400);
+      }
+    }
+
+    // 004 Q4 叙事矛盾分类端点：POST /api/classify（advisory，不改正典值）
+    if (path === "/api/classify" && req.method === "POST") {
+      try {
+        const data = JSON.parse(body || "{}");
+        const result = await classifyNarrativeConflict(llm, data.first, data.second);
+        return json({ ok: true, ...result });
+      } catch (e) {
+        return json({ ok: false, error: (e as Error).message }, 400);
+      }
+    }
+
+    // 叙事提议查询：GET /api/proposals?role=A
+    if (path === "/api/proposals" && req.method === "GET") {
+      const qs = new URL(req.url ?? "", "http://localhost").searchParams;
+      const role = qs.get("role") ?? undefined;
+      return json(store.getProposals(role ? { role } : undefined));
+    }
+
     json({
       name: "共典 MVP",
       schema_version: schema.schema_version,
       roles: store.roles,
       seq: store.seq,
-      endpoints: ["/api/panel/:role", "/api/briefing/:role", "/api/settle", "/api/ledger"],
+      endpoints: ["/api/panel/:role", "/api/briefing/:role", "/api/settle", "/api/ledger", "/api/narrative/:role", "/api/classify", "/api/proposals"],
+      llm: llm.name,
     });
+    })();
   });
 });
 

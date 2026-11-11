@@ -153,10 +153,24 @@ export interface Ledger {
   sideBranches: SideBranchEvent[];
   /** 事实条目 */
   facts: FactEntry[];
+  /** 叙事提议（proposals partition，002 决议②） */
+  proposals: ProposalEntry[];
   /** 物化视图：KnownSet[role] */
   knownSets: Map<string, KnownSetEntry[]>;
   /** 当前全局 seq */
   seqCounter: number;
+}
+
+/** 叙事提议条目（proposals partition，002 决议②：不写结算值，仅记录 LLM 提议） */
+export interface ProposalEntry {
+  /** 账本当前 seq（写入时快照） */
+  at_seq: number;
+  ts: string;
+  role: string;
+  narrative: string;
+  suggested_value?: unknown;
+  provider: string;
+  usage: { inputTokens: number; outputTokens: number };
 }
 
 /** 角色视图：panel_state[role] 物化快照（006） */

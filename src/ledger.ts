@@ -7,6 +7,7 @@ import type {
   FactEntry,
   KnownSetEntry,
   Ledger,
+  ProposalEntry,
 } from "./types.js";
 
 export class LedgerStore {
@@ -16,6 +17,7 @@ export class LedgerStore {
   private knownSets = new Map<string, KnownSetEntry[]>();
   private seqCounter = 0;
   private roleSet = new Set<string>();
+  private proposals: ProposalEntry[] = [];
 
   /** 注册角色（首次出现时自动注册） */
   registerRole(role: string): void {
@@ -104,6 +106,26 @@ export class LedgerStore {
     return this.knownSets.get(role) ?? [];
   }
 
+  /** 追加叙事提议（proposals partition，002 决议②：不写结算值） */
+  addProposal(p: Omit<ProposalEntry, "at_seq" | "ts"> & { ts?: string }): ProposalEntry {
+    const entry: ProposalEntry = {
+      at_seq: this.seqCounter,
+      ts: p.ts ?? new Date().toISOString(),
+      role: p.role,
+      narrative: p.narrative,
+      suggested_value: p.suggested_value,
+      provider: p.provider,
+      usage: p.usage,
+    };
+    this.proposals.push(entry);
+    return entry;
+  }
+
+  /** 叙事提议（proposals partition，seq 无关，仅时间戳） */
+  getProposals(filter?: { role?: string }): ProposalEntry[] {
+    return this.proposals.filter((p) => !filter?.role || p.role === filter.role);
+  }
+
   /** 全量导出（可序列化到 YAML/JSONL 文件，009 Q2 存档） */
   export(): Omit<Ledger, "knownSets"> & { knownSets: Record<string, KnownSetEntry[]>; roles: string[] } {
     const ks: Record<string, KnownSetEntry[]> = {};
@@ -112,6 +134,7 @@ export class LedgerStore {
       events: this.events,
       sideBranches: this.sideBranches,
       facts: this.facts,
+      proposals: this.proposals,
       knownSets: ks,
       seqCounter: this.seqCounter,
       roles: this.roles,
@@ -124,6 +147,7 @@ export class LedgerStore {
     store.events = data.events;
     store.sideBranches = data.sideBranches;
     store.facts = data.facts;
+    store.proposals = data.proposals ?? [];
     store.seqCounter = data.seqCounter;
     store.roleSet = new Set(data.roles);
     for (const role of data.roles) store.knownSets.set(role, []);
