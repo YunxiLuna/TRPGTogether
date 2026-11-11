@@ -1,0 +1,91 @@
+# R1 风险验证 · 斗罗《诸天穿越系统》数值结算体系 catalog
+# 世界书: prototype/_doulou.txt（978 行，~26.5KB，属性复杂型）
+# 方法: 009 R1 早期验证——统计 S2 逃生门 3 条件（004 Q6）触发率
+#   ① 结算逻辑确实用 6 基元表达不了（复杂迭代/递归/外部查表/条件分支依赖外部状态）
+#   ② 007 判可量化密度高档（本世界书=高密度体系型，②视为满足）
+#   ③ 沙箱产物写同一账本（若 ①② 满足，③ 是工程可行性，默认可满足）
+# 判定: 每个数值体系逐一评估，标记可被 MVP 最小可用子集（quantity/formula/state_machine）
+#        表达 或 必须走 S2。MVP 表达式文法限制: 仅 + - * / ( ) 常量与量纲名，无条件分支/查表/迭代。
+
+systems:
+  - name: 装逼值结算
+    source: "2.2 / 8.1-8.3 装逼镜头分类与倍率"
+    expressible: false
+    why: "按镜头类型查表（越级挑战 100×等级差、当众打脸 1000+、目击人数指数放大）+ 条件倍率（隐藏实力后爆发 +50%、目击者人数越多越高=外部状态依赖）→ 查表+条件分支，MVP 表达式文法不支持 if/查表"
+  - name: 积分商店 / 装逼值商店
+    source: "2.5 / 2.6"
+    expressible: true
+    why: "纯兑换映射（固定兑换表），mapping 基元+quantity 足够；无迭代"
+  - name: 签到系统
+    source: "2.4"
+    expressible: true
+    why: "连续天数→固定奖励查表，枚举档位 mapping 可表达（1/3/7/14/30/60/100/365 天）；特殊地点奖励=枚举映射"
+  - name: 魂环吸收与共鸣
+    source: "2.3 特权一"
+    expressible: false
+    why: "每额外魂环 20% 概率触发共鸣→年限总和×1.5，多层叠加+概率迭代（叠加 N 个的联合分布），递归结算"
+  - name: 气运掠夺
+    source: "2.3 特权三"
+    expressible: false
+    why: "概率依赖目标身份（天命之人/邪恶阵营翻倍）= 条件查表（外部状态依赖），非纯量纲运算"
+  - name: 武魂融合进化
+    source: "2.3 特权二"
+    expressible: false
+    why: "融合后每 10 级自动触发'随机解锁隐藏魂技'——随机事件生成，非声明式结算"
+  - name: 魂力等级（魂士→封号→神）
+    source: "3.1 / 3.2"
+    expressible: true
+    why: "纯档位 state_machine（10 级/档线性递进，神官→神王 5 档），guard 为等级阈值"
+  - name: 魂环年限体系
+    source: "3.3"
+    expressible: true
+    why: "颜色→年限枚举映射（白/黄/紫/黑/红/橙金/金/神赐）"
+  - name: 战力等级对照表
+    source: "3.4"
+    expressible: true
+    why: "等级区间→C-/C/B/A/S/SS/SSS/神级 mapping"
+  - name: 武魂库（品质/进化）
+    source: "第四章"
+    expressible: false
+    why: "数百个武魂条目+品质档位（普通/精品/极品/神级）+进化路径依赖外部查表，超出 MVP 子集规模"
+  - name: 斗铠锻造
+    source: "5.2"
+    expressible: true
+    why: "六字档位→战力加成固定表（+20%~+500%），mapping+quantity；锻造要求=档位门槛 guard"
+  - name: 魂骨进化
+    source: "5.3"
+    expressible: false
+    why: "'外附魂骨随每次魂环进阶而进化'=跨实体依赖迭代（魂环状态→魂骨状态→超神器），多轮联动"
+  - name: 神位解锁
+    source: "第六章"
+    expressible: false
+    why: "30 个神位各自多条件解锁（完成 100 隐藏任务且从未使用气运加持等）= 复杂条件组合+外部历史状态查询"
+  - name: 性别/性格/背景模板加成
+    source: "10.2 / 10.4 / 10.5 / 10.6"
+    expressible: true
+    why: "开局一次性查表加成（+10 好感、装逼值获取 +10~20%、精神力+2），枚举 mapping"
+  - name: 创世神解锁
+    source: "6.5"
+    expressible: false
+    why: "五大条件联合（集齐 4 碎片+击败 3 至尊+通过考验+超神器+装逼值 100 万）= 多实体历史聚合判定"
+
+# 统计
+stats:
+  total: 15
+  s2_required: 8
+  expressible: 7
+  s2_trigger_rate: "53.3%"
+
+# 009 R1 判定
+verdict:
+  threshold_low: "<10% = 6 基元够用，风险解除"
+  threshold_high: ">=30% = 表达力真不够"
+  observed: "53.3%（8/15），落在高区——R1 风险在'属性复杂'世界书上真实成立"
+  conclusion: >
+    斗罗世界书 S2 触发率 53.3% 远超 30% 阈值，6 基元 + MVP 表达式文法（无条件/无查表）
+    对其核心爽点机制（装逼值）表达力不足。缓解路径（009 Q5② 已定）:
+    (a) S2 属性级默认关，仅装逼值等高承重属性按需开启（GM 仪表盘看近似差异）;
+    (b) 表达式文法扩 if/映射查表 = 扩基元（破坏'固定 6 基元防膨胀闸'，需 ADR 拍板）;
+    (c) 接受 S2 常态化（破坏 002 放弃项精神，需 009 Q5③ 第 2/3 层发现通道兜底）。
+    MVP 验收素材仍为修仙大千（008 Q8），斗罗不进 MVP 主验收（008 Q8 定死），
+    本 catalog 作为 R1 早期验证记录入库。

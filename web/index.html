@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>共典</title>
+<style>
+  :root {
+    --bg: #101014;
+    --panel: #181820;
+    --line: #2a2a34;
+    --text: #d8d8e0;
+    --muted: #8a8a96;
+    --accent: #d4a853;
+    --ok: #5fb86c;
+    --warn: #d99a4e;
+    --err: #d4605e;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.55 "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  header {
+    display: flex; align-items: center; gap: 16px;
+    padding: 10px 16px; background: var(--panel);
+    border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; z-index: 5;
+  }
+  header h1 { font-size: 16px; margin: 0; color: var(--accent); font-weight: 600; }
+  header .meta { color: var(--muted); font-size: 12px; }
+  header .routes { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
+  header .routes a {
+    color: var(--muted); text-decoration: none; font-size: 13px;
+    padding: 4px 10px; border: 1px solid var(--line); border-radius: 6px;
+  }
+  header .routes a.on { color: var(--text); border-color: var(--accent); }
+  main { display: grid; grid-template-columns: 1.4fr 1fr; gap: 14px; padding: 14px; }
+  section {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 10px; padding: 14px; min-width: 0;
+  }
+  section h2 {
+    margin: 0 0 10px; font-size: 13px; color: var(--muted);
+    font-weight: 600; letter-spacing: .05em;
+  }
+  .stream { max-height: calc(100vh - 150px); overflow: auto; }
+  .ev {
+    display: grid; grid-template-columns: 64px 1fr; gap: 8px;
+    padding: 8px 6px; border-bottom: 1px solid var(--line); font-size: 13px;
+  }
+  .ev .seq { color: var(--muted); }
+  .ev .kind { color: var(--accent); }
+  .ev .body { white-space: pre-wrap; word-break: break-word; }
+  .ev.side { font-style: italic; opacity: .85; }
+  .ev.side .tag {
+    display: inline-block; font-style: normal; font-size: 11px;
+    color: var(--warn); border: 1px solid var(--warn); border-radius: 4px;
+    padding: 0 4px; margin-left: 6px;
+  }
+  .layers .layer { margin-bottom: 10px; }
+  .layer h3 {
+    margin: 0 0 6px; font-size: 12px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .06em;
+  }
+  .layer .kv {
+    display: flex; justify-content: space-between; gap: 8px;
+    padding: 4px 0; border-bottom: 1px dashed var(--line); font-size: 13px;
+  }
+  .layer .kv b { font-weight: 500; color: var(--text); }
+  .layer .kv span:last-child { color: var(--accent); }
+  .rumor {
+    padding: 6px 8px; border-left: 3px solid var(--warn);
+    background: rgba(217,154,78,.08); border-radius: 4px;
+    font-size: 13px; margin: 6px 0;
+  }
+  .empty { color: var(--muted); font-size: 13px; font-style: italic; }
+  form.narr { display: flex; flex-direction: column; gap: 8px; }
+  form.narr input, form.narr textarea, form.narr select {
+    background: #0d0d12; color: var(--text);
+    border: 1px solid var(--line); border-radius: 6px;
+    padding: 8px; font: inherit; font-size: 13px;
+  }
+  form.narr textarea { min-height: 56px; resize: vertical; }
+  form.narr button {
+    align-self: flex-start;
+    background: var(--accent); color: #14140f; border: none;
+    border-radius: 6px; padding: 8px 16px; font: inherit; font-weight: 600;
+    cursor: pointer;
+  }
+  form.narr button:disabled { opacity: .5; cursor: default; }
+  .log { margin-top: 10px; font-size: 12px; color: var(--muted); word-break: break-word; }
+  .log .ok { color: var(--ok); }
+  .log .err { color: var(--err); }
+  @media (max-width: 900px) {
+    main { grid-template-columns: 1fr; }
+    .stream { max-height: 45vh; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>共典 · 多人共享世界观</h1>
+  <span class="meta" id="meta">连接中…</span>
+  <nav class="routes" id="routes"></nav>
+</header>
+
+<main>
+  <section>
+    <h2>事件流（账本）</h2>
+    <div class="stream" id="stream"><div class="empty">加载中…</div></div>
+  </section>
+
+  <section>
+    <h2>面板 <span id="roleName" style="color:var(--accent)"></span></h2>
+    <div class="layers" id="layers"><div class="empty">加载中…</div></div>
+  </section>
+
+  <section>
+    <h2>行动 / 叙事输入</h2>
+    <form class="narr" id="settleForm">
+      <label>数值结算（settle）</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <input id="sActor" placeholder="角色，如 A" required />
+        <input id="sFact" placeholder="fact_ref，如 突破成功率" required />
+      </div>
+      <textarea id="sInputs" placeholder='inputs JSON，如 {"悟性":100,"气运":50,"体魄":200}'></textarea>
+      <button type="submit">提交结算</button>
+    </form>
+    <form class="narr" id="narrForm" style="margin-top:12px">
+      <label>叙事生成（narrative，写入 proposals 分区）</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <input id="nRole" placeholder="角色，如 A" required />
+        <input id="nFact" placeholder="fact_ref（可选）" />
+      </div>
+      <input id="nSlice" placeholder="世界书切片（可选，原文段）" />
+      <button type="submit" id="nBtn">生成叙事</button>
+      <div class="log" id="log"></div>
+    </form>
+  </section>
+
+  <section>
+    <h2>缺席简报（rumor 层 description）</h2>
+    <form class="narr" id="briefForm">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <input id="bRole" placeholder="查看哪个角色的简报，如 B" required />
+      </div>
+      <button type="submit">查看</button>
+    </form>
+    <div class="log" id="brief"></div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const routes = [];
+let currentRole = "A";
+
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  const t = await r.text();
+  let j;
+  try { j = JSON.parse(t); } catch { j = t; }
+  if (!r.ok) throw new Error(path + " -> " + r.status + " " + (j && j.error ? j.error : typeof j === "string" ? j.slice(0, 200) : ""));
+  return j;
+}
+
+function pickRole() {
+  const m = location.pathname.match(/^\/player\/([A-Za-z0-9_]+)$/);
+  if (m) currentRole = m[1];
+  else {
+    const q = new URLSearchParams(location.search).get("role");
+    if (q) currentRole = q;
+  }
+  document.getElementById("roleName").textContent = "· " + currentRole;
+  renderRoutes();
+}
+
+function renderRoutes() {
+  const nav = document.getElementById("routes");
+  nav.innerHTML = "";
+  for (const r of routes) {
+    const a = document.createElement("a");
+    a.textContent = r;
+    a.href = r === "GM" ? "/gm" : "/player/" + r;
+    a.className = (r === currentRole) ? "on" : "";
+    a.onclick = (e) => { e.preventDefault(); location.href = a.href; };
+    nav.appendChild(a);
+  }
+}
+
+function renderStream(ledger) {
+  const box = document.getElementById("stream");
+  const all = [
+    ...ledger.events.map((e) => ({ ...e, side: false })),
+    ...ledger.sideBranches.map((e) => ({ ...e, side: true })),
+  ].sort((a, b) => a.seq - b.seq);
+
+  if (!all.length) { box.innerHTML = '<div class="empty">账本为空，先提交一次结算。</div>'; return; }
+  box.innerHTML = all.map((e) => {
+    const tag = e.side ? ' <span class="tag">' + (e.reason_code || "side") + "</span>" : "";
+    const val = typeof e.value === "object" ? JSON.stringify(e.value) : String(e.value);
+    const radius = e.propagation_radius === "all" ? "公开" : "[" + String(e.propagation_radius) + "]";
+    return '<div class="ev' + (e.side ? " side" : "") + '">' +
+      '<div class="seq">#' + e.seq + '<br>' + e.kind + '</div>' +
+      '<div class="body">' + e.fact_ref + " = " + val + tag +
+      '<br><span style="color:var(--muted)">' + e.actor + " · " + radius + " · " + e.canon_status + "</span></div></div>";
+  }).join("");
+  box.scrollTop = box.scrollHeight;
+}
+
+function renderLayers(view) {
+  const box = document.getElementById("layers");
+  const l = view.layers || {};
+  const mk = (title, obj) => {
+    const keys = Object.keys(obj || {});
+    if (!keys.length) return '<div class="layer"><h3>' + title + '</h3><div class="empty">（无）</div></div>';
+    let body = "";
+    for (const k of keys) {
+      const v = obj[k];
+      body += "<div class='kv'><b>" + k + "</b><span>" +
+        (v && typeof v === "object" ? JSON.stringify(v) : v) + "</span></div>";
+    }
+    return '<div class="layer"><h3>' + title + "</h3>" + body + "</div>";
+  };
+  const parts = [];
+  parts.push(mk("公开层 public", l.public));
+  parts.push(mk("私有层 private", l.private));
+  if (l.rumor && Object.keys(l.rumor).length) {
+    const rumors = Object.entries(l.rumor).map(([k, v]) =>
+      '<div class="rumor"><b>' + k + "</b>（" + v.blur_level + "）" + v.description + "</div>").join("");
+    parts.push('<div class="layer"><h3>传闻层 rumor</h3>' + rumors + "</div>");
+  } else {
+    parts.push('<div class="layer"><h3>传闻层 rumor</h3><div class="empty">（无）</div></div>');
+  }
+  box.innerHTML = parts.join("");
+}
+
+async function refresh() {
+  try {
+    const [root, ledger, panel] = await Promise.all([
+      api("/"),
+      api("/api/ledger"),
+      api("/api/panel/" + encodeURIComponent(currentRole)),
+    ]);
+    routes.length = 0;
+    for (const r of root.roles || []) routes.push(r);
+    if (!routes.includes(currentRole) && routes.includes("A")) currentRole = "A";
+    document.getElementById("meta").textContent =
+      "seq " + root.seq + " · schema " + root.schema_version + " · LLM " + root.llm + " · 自动刷新 3s";
+    renderRoutes();
+    renderStream(ledger);
+    renderLayers(panel);
+  } catch (e) {
+    document.getElementById("meta").textContent = "服务器未连接：" + e.message;
+  }
+}
+
+document.getElementById("settleForm").onsubmit = async (e) => {
+  e.preventDefault();
+  let inputs = {};
+  const raw = document.getElementById("sInputs").value.trim();
+  if (raw) { try { inputs = JSON.parse(raw); } catch { log("inputs 不是合法 JSON", true); return; } }
+  try {
+    const r = await api("/api/settle", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        actor: document.getElementById("sActor").value || currentRole,
+        fact_ref: document.getElementById("sFact").value,
+        inputs,
+      }),
+    });
+    log(r.ok ? "结算成功 seq=" + r.seq + " → " + JSON.stringify(r.result) : "结算拒绝：" + r.reason, !r.ok);
+    refresh();
+  } catch (err) { log("settle 失败：" + err.message, true); }
+};
+
+document.getElementById("narrForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById("nBtn");
+  btn.disabled = true;
+  try {
+    const r = await api("/api/narrative/" + encodeURIComponent(document.getElementById("nRole").value || currentRole), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fact_ref: document.getElementById("nFact").value.trim() || undefined,
+        worldbookSlice: document.getElementById("nSlice").value.trim() || undefined,
+      }),
+    });
+    const p = r.proposal;
+    log('叙事已入 proposals（at_seq=' + p.at_seq + '，' + p.usage.inputTokens + '/' + p.usage.outputTokens + ' tokens）：' + p.narrative, false);
+    refresh();
+  } catch (err) { log("narrative 失败：" + err.message, true); }
+  finally { btn.disabled = false; }
+};
+
+document.getElementById("briefForm").onsubmit = async (e) => {
+  e.preventDefault();
+  try {
+    const r = await api("/api/briefing/" + encodeURIComponent(document.getElementById("bRole").value));
+    const items = r.items.map((i) => "· " + i.render).join("\n");
+    document.getElementById("brief").innerHTML = items ? items : '<span class="ok">该角色当前无 rumor 层条目。</span>';
+  } catch (err) { document.getElementById("brief").textContent = "briefing 失败：" + err.message; }
+};
+
+function log(msg, isErr) {
+  const el = document.getElementById("log");
+  el.innerHTML = '<div class="' + (isErr ? "err" : "ok") + '">' + msg + "</div>" + el.innerHTML;
+}
+
+pickRole();
+refresh();
+setInterval(refresh, 3000);
+</script>
+</body>
+</html>

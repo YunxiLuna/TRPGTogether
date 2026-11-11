@@ -3,6 +3,7 @@
 
 import http from "node:http";
 import { readFileSync, existsSync } from "node:fs";
+import { join as pathJoin } from "node:path";
 import { join } from "node:path";
 import { LedgerStore } from "../ledger.js";
 import { parseSchema, type SchemaDef } from "../index.js";
@@ -38,6 +39,22 @@ function loadSchema(): SchemaDef {
 }
 
 const schema = loadSchema();
+
+// 009 Q1：纯浏览器客户端。web/ 为单页应用（无构建依赖），随 dist/server 同进程静态服务。
+const WEB_DIR = pathJoin(process.cwd(), "web");
+
+import type { ServerResponse } from "node:http";
+
+function serveStatic(res: ServerResponse, pathname: string) {
+  // SPA 路由兜底：/player/:role、/gm、/ 都回 index.html，客户端 JS 解析路由
+  const filePath = pathJoin(WEB_DIR, "index.html");
+  if (existsSync(filePath)) {
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+    res.end(readFileSync(filePath));
+    return true;
+  }
+  return false;
+}
 
 const server = http.createServer((req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -141,6 +158,9 @@ const server = http.createServer((req, res) => {
       const role = qs.get("role") ?? undefined;
       return json(store.getProposals(role ? { role } : undefined));
     }
+
+    // 非 API 路径 → 静态 SPA（009 Q1 浏览器路由 /player/:role、/gm）
+    if (!path.startsWith("/api/") && serveStatic(res, path)) return;
 
     json({
       name: "共典 MVP",
