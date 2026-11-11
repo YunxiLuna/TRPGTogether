@@ -1,0 +1,138 @@
+<!doctype html>
+<!-- PROTOTYPE, wipe me: 一次性架构对比原型，用于 #3 决策，验证后只保留结论，本文件可删 -->
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>共典架构对比原型（#3 决策辅助）</title>
+<style>
+  body{font-family:"Microsoft YaHei",sans-serif;margin:0;background:#111;color:#ddd}
+  header{background:#1b1b2a;padding:14px 22px;border-bottom:2px solid #444}
+  h1{font-size:18px;margin:0 0 6px}
+  .sub{font-size:12px;color:#999}
+  .bar{display:flex;gap:8px;padding:10px 22px;background:#16161f;position:sticky;top:0}
+  .bar button{background:#2a2a3d;color:#ccc;border:1px solid #444;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:13px}
+  .bar button.on{background:#3b3b5c;color:#fff;border-color:#666}
+  .wrap{padding:18px 22px;max-width:1080px;margin:0 auto}
+  .card{background:#191925;border:1px solid #333;border-radius:8px;padding:14px 16px;margin:12px 0}
+  .card h3{margin:0 0 8px;font-size:15px;color:#f0c674}
+  .card p{font-size:13px;line-height:1.75;margin:6px 0}
+  .tag{display:inline-block;font-size:11px;background:#2c2c44;padding:2px 8px;border-radius:10px;margin-right:6px}
+  table{border-collapse:collapse;width:100%;font-size:12.5px;margin:10px 0}
+  th,td{border:1px solid #333;padding:6px 9px;text-align:left;vertical-align:top}
+  th{background:#232336;color:#aab}
+  td.good{color:#7ddc7d}
+  td.mid{color:#e8c46b}
+  td.bad{color:#e07b7b}
+  .scores td{text-align:center}
+  ul{font-size:13px;line-height:1.7}
+  li{margin:3px 0}
+  .q{font-size:13px;color:#8fd0ff;line-height:1.7;margin:8px 0}
+  .q b{color:#ffd}
+  .state{background:#0f0f17;border:1px dashed #444;border-radius:8px;padding:12px;font-size:13px;line-height:1.7;margin-top:14px}
+  .state b{color:#f0c674}
+  .verdict{background:#1a2a1a;border:1px solid #3a5a3a}
+  .verdict h3{color:#7ddc7d}
+</style>
+</head>
+<body>
+<header>
+  <h1>共典架构对比原型</h1>
+  <div class="sub">一次性决策辅助 · 对应 GitHub #3 · 先点「走查」两个场景把三个方案推一遍，再切「打分」看收敛，再切「决策」拍板。本页可整页删。</div>
+</header>
+<div class="bar">
+  <button id="t-walk" class="on" onclick="show('walk')">走查（两个必答题场景）</button>
+  <button id="t-score" onclick="show('score')">打分（七维对比）</button>
+  <button id="t-decide" onclick="show('decide')">决策（推荐 + 放弃项）</button>
+</div>
+<div class="wrap" id="walk"></div>
+<div class="wrap" id="score" style="display:none"></div>
+<div class="wrap" id="decide" style="display:none"></div>
+<script>
+function show(w){
+  document.getElementById('walk').style.display = w==='walk'?'block':'none';
+  document.getElementById('score').style.display = w==='score'?'block':'none';
+  document.getElementById('decide').style.display = w==='decide'?'block':'none';
+  for(const t of ['walk','score','decide']) document.getElementById('t-'+t).classList.toggle('on', t===w);
+}
+const S = {
+  s1:{name:'S1 声明式 DSL + 通用解释器', color:'#6aa3ff'},
+  s2:{name:'S2 LLM 生成代码 + 沙箱', color:'#ff9a6a'},
+  s3:{name:'S3 混合分层（解释器为结算权威）', color:'#b48aff'}
+};
+const WALK1 = [
+  {s:'s1', step:
+    `玩家 A 提议："我的剑意值升到 7。"
+引擎结算：查 schema「剑意值」= 声明式规则（区间 [1,10]，来源世界书段落 #23）
+ → 7 在区间内 → 通过 → 写账本 {actor:A, attr:剑意, value:7, ledger_seq:412}
+叙事 LLM 拿到"引擎判通过"，写叙事："剑意攀升，他握剑更稳了。"`},
+  {s:'s2', step:
+    `玩家 A 提议："我的剑意值升到 7。"
+引擎结算：沙箱执行生成代码 `set_jianyi(7)`
+ → 代码内部有 if 链与隐藏分支（LLM 生成时顺手写的）→ 返回 {value:7, note:"按你的设定，7 级剑意需要领悟"}
+ → 写账本。注意：代码里藏了一个分支"若 A 血量 < 3 则剑意自动 -1"——这个分支在账本里只表现为 value 变了，人读不出为什么。`}
+];
+const WALK2 = [
+  {s:'s1', step:
+    `玩家 A 提交："我铸了铁剑，值为 10。"（基于世界书第 3 章）
+玩家 B 同时提交："我铸了铁剑，值为 15。"（基于世界书第 7 章）
+引擎：两条 schema 规则都存在且都通过校验 → 不冲突于引擎
+ → 冲突在"同一事实两个值"层面 → 按已知结论先提交者正典化（A 的 10 为正典）
+ → B 的 15 写入旁支账本 {canon:false, reason:"worldbook_conflict_ch3_vs_ch7"}
+ → 叙事层：给 B 的角色注入"有人提到你铸的剑似乎不对，老铁匠说应该是 10"（角色内视角传闻）。`}
+];
+function renderWalk(){
+  const el = document.getElementById('walk');
+  let h = '';
+  h += `<div class="card"><h3>场景 1：单人提议结算（引擎 vs 叙事分歧谁说了算？）</h3>`;
+  for(const item of WALK1){
+    h += `<div class="q"><span class="tag">${S[item.s].name}</span> ${item.step}</div>`;
+  }
+  h += `<div class="state"><b>观察</b>：S1 引擎输出即账本本身，无解释空间；S2 引擎输出可能附带 LLM 生成代码里的"隐藏逻辑"，账本只能记 value，记不 why；S3 与 S1 同形（核心路径恒为解释器），差异只在"哪些 schema 允许走 S2 代码路径"。</div>`;
+  h += `</div>`;
+  h += `<div class="card"><h3>场景 2：两人矛盾（先提交正典、后提交旁支）</h3>`;
+  for(const item of WALK2){
+    h += `<div class="q"><span class="tag">${S[item.s].name}</span> ${item.step}</div>`;
+  }
+  h += `<div class="state"><b>观察</b>：引擎无法仲裁"两个值哪个对"（两个都在 schema 内）——仲裁在<b>账本层</b>而非引擎层。S1/S3 的账本是数据（JSON），仲裁规则可读；S2 的账本里混有生成代码的副作用，旁支标注更难追溯。</div>`;
+  h += `</div>`;
+  el.innerHTML = h;
+}
+const SCORES = [
+  // dim, s1, s2, s3
+  ['人力依赖度（0=无人，5=需人审）', 2, 4, 2],
+  ['schema 生成可靠性（0=最不可靠，5=最可靠）', 4, 2, 4],
+  ['演化治理难度（0=易治理，5=难治理）', 2, 5, 3],
+  ['一致性可靠性（0=最不一致，5=最一致）', 4, 2, 4],
+  ['叙事自由度（0=最不自由，5=最自由）', 3, 5, 3],
+  ['成本（0=最便宜，5=最贵）', 3, 4, 3],
+  ['冷启动难度（0=最易，5=最难）', 4, 3, 4],
+];
+function renderScore(){
+  const el = document.getElementById('score');
+  let h = '<div class="card"><h3>七维打分（0–5，方向见括号）</h3><table class="scores"><tr><th>维度</th><th>S1 声明式</th><th>S2 生成代码</th><th>S3 混合</th></tr>';
+  for(const d of SCORES){
+    h += `<tr><td>${d[0]}</td><td>${d[1]}</td><td>${d[2]}</td><td>${d[3]}</td></tr>`;
+  }
+  h += `</table><div class="state"><b>读法</b>：S1 全面均衡；S2 在"叙事自由度"与"成本"（推理期更贵）占优，但在可靠性/治理/一致性上系统性落后——因为生成代码无法被验证流水线逐条回算；S3 与 S1 打平（核心路径恒为解释器），仅在"哪些属性允许走 S2 代码路径"上开一条逃生门。若逃生门条件严（仅当回算验证通过 + 多模型一致时才允许），S3 ≈ S1 + 叙事自由度 +1。</div></div>`;
+  el.innerHTML = h;
+}
+function renderDecide(){
+  const el = document.getElementById('decide');
+  const h = `
+  <div class="card verdict"><h3>推荐：S3 混合分层（数值结算权威 = S1 解释器；S2 代码路径仅作可选逃生门）</h3>
+  <p><b>为什么不选 S1 纯声明式</b>：S1 的 DSL 表达能力有限——世界书里"剑意值随悟道事件+3，但血量低于 3 时自动 -1"这种带分支的规则，DSL 写起来冗长，生成置信度下降。S3 允许在"验证流水线全绿"的属性上走 S2 路径，叙事自由度更高。</p>
+  <p><b>为什么不选 S2 纯生成代码</b>：无法逐条回算验证（代码是黑盒），账本里副作用不可追溯，世界书矛盾场景下旁支标注失效——这直接违反"事实分临时/正典两级"的已知结论。S2 作为唯一结算层不可接受。</p>
+  <p><b>明确放弃项</b>：</p>
+  <ul>
+    <li>放弃"代码沙箱作为主要引擎"（S2 主路径）：验证不可行。</li>
+    <li>放弃"多模型交叉生成 DSL"作为标准路径：成本高、冷启动慢；仅在世界书可量化密度高的前提下作为可选增强（007 校准票决定）。</li>
+    <li>放弃"叙事 LLM 直接写数值"：引擎输出不可被叙事层覆盖是硬约束，S2 逃生门也不能让叙事 LLM 直接改值——它只能提议，引擎结算。</li>
+  </ul>
+  <div class="state"><b>决策一句话</b>：数值结算恒走声明式解释器（S1 核心），S2 代码路径是"验证全绿后允许的属性级逃生门"，逃生门开启由 003 schema 生成票决定，校准严格度由 007 决定。此结论解锁 004（引擎权威性）与 005–008 的引擎假设。</div>
+  </div>`;
+  el.innerHTML = h;
+}
+renderWalk(); renderScore(); renderDecide();
+</script>
+</body>
+</html>
