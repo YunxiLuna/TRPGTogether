@@ -1,0 +1,113 @@
+# 修仙大千·突破成功率 schema（003 最小可用子集：quantity + formula + state_machine）
+# 来源：prototype/_xiuxian.txt 第三卷 4.1/4.2/4.3
+schema_version: "xiuxian-v1"
+quantities:
+  - name: 突破成功率
+    unit: "%"
+    range: { min: 0, max: 95 }
+    cap: 95
+    citations:
+      - section: "第三卷·4.1"
+        para_hash: "abc123"
+        prefix: "丹药突破成功率加成：…上限95%。失败可重试，材料损毁。"
+  - name: 强行突破概率
+    unit: "%"
+    range: { min: 0, max: 15 }
+    cap: 15
+    citations:
+      - section: "第三卷·4.2"
+        para_hash: "def456"
+        prefix: "强行突破基础概率…上限15%。失败后果4级。"
+  - name: 悟性
+    unit: "点"
+    range: { min: 0, max: 1000 }
+  - name: 气运
+    unit: "点"
+    range: { min: 0, max: 1000 }
+  - name: 体魄
+    unit: "点"
+    range: { min: 0, max: 1000 }
+formulas:
+  # 丹药基础成功率（按境界）→ 映射基值（这里做示例，取 练气→筑基 = 60%）
+  - name: 丹药基础成功率
+    expression: "60"
+    input_quantities: []
+    cap: 95
+    citations:
+      - section: "第三卷·4.1 突破丹表"
+        para_hash: "ghj789"
+        prefix: "练气→筑基 筑基丹 … 基础成功率 60%"
+  # 强行加成（悟性/气运/体魄 每50点 +1%）
+  - name: 强行加成
+    expression: "悟性/50 + 气运/50 + 体魄/50"
+    input_quantities: ["悟性", "气运", "体魄"]
+    cap: 15
+  # 混合突破总成功率（4.3：丹药基础 + 强行加成 × 50%）
+  - name: 混合总成功率
+    expression: "丹药基础成功率 + 强行加成 * 0.5"
+    input_quantities: ["丹药基础成功率", "强行加成"]
+    cap: 95
+state_machines:
+  - name: 突破状态机
+    states: ["练气", "筑基", "金丹", "元婴", "化神", "炼虚", "合体", "大乘", "渡劫", "地仙", "天仙", "真仙", "金仙", "太乙", "大罗", "道祖"]
+    transitions:
+      - from: "练气"
+        to: "筑基"
+        guard: "突破成功率 >= 60"
+        probability: 0.6
+      - from: "筑基"
+        to: "金丹"
+        guard: "突破成功率 >= 50"
+        probability: 0.5
+      - from: "金丹"
+        to: "元婴"
+        guard: "突破成功率 >= 40"
+        probability: 0.4
+      - from: "元婴"
+        to: "化神"
+        guard: "突破成功率 >= 35"
+        probability: 0.35
+      - from: "化神"
+        to: "炼虚"
+        guard: "突破成功率 >= 30"
+        probability: 0.3
+      - from: "炼虚"
+        to: "合体"
+        guard: "突破成功率 >= 25"
+        probability: 0.25
+      - from: "合体"
+        to: "大乘"
+        guard: "突破成功率 >= 20"
+        probability: 0.2
+      - from: "大乘"
+        to: "渡劫"
+        guard: "突破成功率 >= 15"
+        probability: 0.15
+      - from: "渡劫"
+        to: "地仙"
+        guard: "突破成功率 >= 10"
+        probability: 0.1
+      - from: "地仙"
+        to: "天仙"
+        guard: "突破成功率 >= 10"
+        probability: 0.1
+      - from: "天仙"
+        to: "真仙"
+        guard: "突破成功率 >= 8"
+        probability: 0.08
+      - from: "真仙"
+        to: "金仙"
+        guard: "突破成功率 >= 5"
+        probability: 0.05
+      - from: "金仙"
+        to: "太乙"
+        guard: "突破成功率 >= 3"
+        probability: 0.03
+      - from: "太乙"
+        to: "大罗"
+        guard: "突破成功率 >= 2"
+        probability: 0.02
+      - from: "大罗"
+        to: "道祖"
+        guard: "突破成功率 >= 1"
+        probability: 0.01

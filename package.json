@@ -1,0 +1,24 @@
+{
+  "name": "trpgtogether",
+  "version": "0.1.0",
+  "private": true,
+  "description": "共典——多人共享世界观跑团玩具：动态 schema 架构 MVP",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --import tsx --test test/*.test.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "start": "node dist/server/index.js"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "js-yaml": "^5.5.0"
+  }
+}

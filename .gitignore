@@ -1,2 +1,8 @@
 # deck plugin local workspace anchor — not meant to be shared via git
 docs/agents/workspace.yaml
+
+# build
+dist/
+
+# node
+node_modules/
