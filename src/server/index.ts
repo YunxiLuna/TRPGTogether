@@ -80,6 +80,23 @@ const server = http.createServer((req, res) => {
       res.end(JSON.stringify(o, null, 2));
     };
 
+    // GM 仪表盘：全角色面板 + 叙事提议 + 事件流（一次拉全）
+    if (path === "/api/gm/overview" && req.method === "GET") {
+      const rolePanels: Record<string, unknown> = {};
+      for (const r of store.roles) {
+        if (r === "GM") continue;
+        rolePanels[r] = buildPanelView(store, r, schema.schema_version);
+      }
+      return json({
+        roles: store.roles,
+        seq: store.seq,
+        rolePanels,
+        proposals: store.getProposals(),
+        events: store.getEvents(),
+        sideBranches: store.getSideBranches(),
+      });
+    }
+
     // 聊天式前端：LLM 给 3 个推进故事的快捷选项（009 Q1 玩家对话框）
     const pr = path.match(/^\/api\/prompts\/([A-Za-z0-9_]+)$/);
     if (pr && req.method === "GET") {
