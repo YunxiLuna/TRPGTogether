@@ -10,7 +10,7 @@ import { parseSchema, type SchemaDef } from "../index.js";
 import { settle } from "../interpreter.js";
 import { buildPanelView } from "../knownset.js";
 import { buildAbsenceBriefing } from "../briefing.js";
-import { generateNarrative, classifyNarrativeConflict } from "../narrative.js";
+import { generateNarrative, generateStoryPrompts, classifyNarrativeConflict } from "../narrative.js";
 import { providerFromEnv, createLlmProvider, type LlmProvider } from "../llm/types.js";
 import { loadDotEnv, saveDotEnv } from "../env.js";
 
@@ -80,6 +80,17 @@ const server = http.createServer((req, res) => {
       res.end(JSON.stringify(o, null, 2));
     };
 
+    // 聊天式前端：LLM 给 3 个推进故事的快捷选项（009 Q1 玩家对话框）
+    const pr = path.match(/^\/api\/prompts\/([A-Za-z0-9_]+)$/);
+    if (pr && req.method === "GET") {
+      try {
+        const r = await generateStoryPrompts(llm, store, pr[1]);
+        return json({ ok: true, prompts: r.prompts, provider: r.provider });
+      } catch (e) {
+        return json({ ok: false, error: (e as Error).message }, 400);
+      }
+    }
+
     const pm = path.match(/^\/api\/panel\/([A-Za-z0-9_]+)$/);
     if (pm && req.method === "GET") {
       return json(buildPanelView(store, pm[1], schema.schema_version));
@@ -131,6 +142,7 @@ const server = http.createServer((req, res) => {
           factRef: data.fact_ref,
           value: data.value,
           worldbookSlice: data.worldbookSlice,
+          text: data.text,
         });
         const entry = store.addProposal({
           role: proposal.role,

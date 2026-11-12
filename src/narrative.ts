@@ -31,6 +31,8 @@ export interface NarrativeInput {
   value?: unknown;
   /** 世界书三级锚切片（裁剪后，009 Q3 缓存单点） */
   worldbookSlice?: string;
+  /** 玩家自由输入（聊天对话框，009 Q1）—— LLM 据此写叙事 */
+  text?: string;
 }
 
 export async function generateNarrative(
@@ -51,6 +53,7 @@ export async function generateNarrative(
   const userMsg =
     "角色: " + role + "\n" +
     "已知事件:\n" + (eventLines || "  (空)") + "\n" +
+    (input.text ? "玩家输入:\n" + input.text + "\n" : "") +
     (input.worldbookSlice ? "世界书切片:\n" + input.worldbookSlice + "\n" : "") +
     (input.factRef ? "fact_ref: " + input.factRef + "\n" : "") +
     (input.value !== undefined ? "value: " + JSON.stringify(input.value) : "");
@@ -74,6 +77,51 @@ export async function generateNarrative(
     provider: res.provider,
     usage: res.usage,
   };
+}
+
+/**
+ * 生成 3 个推进故事的快捷选项（聊天式前端 009 Q1：对话框下方 3 按钮）
+ * 产出：{ [选项文案]: {} } —— 文案是玩家可见的短句子，点击后作为叙事输入直接发 /api/narrative
+ * MVP 不自动映射 fact_ref/inputs（需要 schema 语义理解，后续再做），选项=纯叙事推进
+ */
+export async function generateStoryPrompts(
+  llm: LlmProvider,
+  store: LedgerStore,
+  role: string,
+): Promise<{ prompts: Record<string, { fact_ref?: string; inputs?: Record<string, unknown> }>; provider: string }> {
+  const ks = store.getKnownSet(role);
+  const eventLines = ks.slice(-8).map((e) => "  " + e.description).join("\n");
+
+  const res = await llm.complete(
+    [
+      {
+        role: "system",
+        content:
+          "意图:推进选项。你是这个世界的叙事者，为角色生成 3 个『接下来可以做什么』的短选项" +
+          "（每个 ≤18 字，玩家点一下就发）。输出 JSON：{ options: string[] }，恰好 3 条。" +
+          "选项要符合世界设定、推进故事，不要重复已知事件。",
+      },
+      {
+        role: "user",
+        content:
+          "角色: " + role + "\n" +
+          "已知事件:\n" + (eventLines || "  (空)") + "\n" +
+          "请给 3 个推进故事的快捷选项。",
+      },
+    ],
+    { temperature: 0.8, maxTokens: 300, responseFormat: "json" },
+  );
+
+  let parsed: { options?: string[] };
+  try {
+    parsed = JSON.parse(res.text) as { options?: string[] };
+  } catch {
+    parsed = { options: [res.text] };
+  }
+  const opts = (parsed.options ?? []).filter((o) => typeof o === "string" && o.trim()).slice(0, 3);
+  const prompts: Record<string, { fact_ref?: string; inputs?: Record<string, unknown> }> = {};
+  for (const o of opts) prompts[o.trim()] = {};
+  return { prompts, provider: res.provider };
 }
 
 /**

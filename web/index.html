@@ -37,30 +37,81 @@
     padding: 4px 10px; border: 1px solid var(--line); border-radius: 6px;
   }
   header .routes a.on { color: var(--text); border-color: var(--accent); }
-  main { display: grid; grid-template-columns: 1.4fr 1fr; gap: 14px; padding: 14px; }
-  section {
+
+  /* 聊天式布局：玩家页=对话框；GM 页=仪表盘 */
+  main.chat {
+    display: flex; flex-direction: column;
+    height: calc(100vh - 49px); max-width: 860px; margin: 0 auto; width: 100%;
+  }
+  .stream {
+    flex: 1; overflow-y: auto; padding: 16px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .msg { max-width: 82%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.55; }
+  .msg .who { font-size: 11px; color: var(--muted); margin-bottom: 4px; letter-spacing: .04em; }
+  .msg .body { white-space: pre-wrap; word-break: break-word; }
+  .msg.narr {
+    align-self: flex-start; background: #1c1c26; border: 1px solid var(--line);
+  }
+  .msg.player {
+    align-self: flex-end; background: #2a2418; border: 1px solid #3d3524;
+  }
+  .msg.event {
+    align-self: center; max-width: 92%; background: transparent;
+    border: 1px dashed var(--line); color: var(--muted); font-size: 12.5px;
+  }
+  .msg.event b { color: var(--accent); font-weight: 500; }
+  .msg.event .side-tag {
+    display: inline-block; font-size: 10.5px; color: var(--warn);
+    border: 1px solid var(--warn); border-radius: 4px; padding: 0 4px; margin-left: 6px;
+  }
+  .msg.side { border-style: dashed; opacity: .88; }
+  .msg .prop {
+    margin-top: 6px; padding: 6px 8px; border-left: 3px solid var(--accent);
+    background: rgba(212,168,83,.08); font-size: 12.5px; color: var(--muted);
+  }
+  .empty { color: var(--muted); font-size: 13px; font-style: italic; text-align: center; margin: auto; }
+
+  /* 输入区：3 个快捷按钮 + 自主输入框 */
+  .composer {
+    background: var(--panel); border-top: 1px solid var(--line);
+    padding: 12px 16px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; min-height: 0; }
+  .chip {
+    background: #20202a; color: var(--text);
+    border: 1px solid var(--line); border-radius: 20px;
+    padding: 7px 14px; font-size: 13px; cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .chip:hover { border-color: var(--accent); background: #26232f; }
+  .chip:disabled { opacity: .45; cursor: default; }
+  .chips .hint { color: var(--muted); font-size: 11.5px; align-self: center; }
+  .inputrow { display: flex; gap: 8px; }
+  .inputrow textarea {
+    flex: 1; resize: none; min-height: 42px; max-height: 120px;
+    background: #0d0d12; color: var(--text);
+    border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font: inherit; font-size: 14px;
+  }
+  .inputrow button {
+    background: var(--accent); color: #14140f; border: none;
+    border-radius: 10px; padding: 0 20px; font: inherit; font-weight: 600; cursor: pointer;
+  }
+  .inputrow button:disabled { opacity: .5; cursor: default; }
+  .busy { color: var(--muted); font-size: 12px; text-align: right; }
+
+  /* GM 仪表盘 */
+  main.dash { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 14px; max-width: 1200px; margin: 0 auto; }
+  main.dash section {
     background: var(--panel); border: 1px solid var(--line);
     border-radius: 10px; padding: 14px; min-width: 0;
   }
+  main.dash section.wide { grid-column: 1 / -1; }
   section h2 {
     margin: 0 0 10px; font-size: 13px; color: var(--muted);
     font-weight: 600; letter-spacing: .05em;
   }
-  .stream { max-height: calc(100vh - 150px); overflow: auto; }
-  .ev {
-    display: grid; grid-template-columns: 64px 1fr; gap: 8px;
-    padding: 8px 6px; border-bottom: 1px solid var(--line); font-size: 13px;
-  }
-  .ev .seq { color: var(--muted); }
-  .ev .kind { color: var(--accent); }
-  .ev .body { white-space: pre-wrap; word-break: break-word; }
-  .ev.side { font-style: italic; opacity: .85; }
-  .ev.side .tag {
-    display: inline-block; font-style: normal; font-size: 11px;
-    color: var(--warn); border: 1px solid var(--warn); border-radius: 4px;
-    padding: 0 4px; margin-left: 6px;
-  }
-  .layers .layer { margin-bottom: 10px; }
+  .layer { margin-bottom: 10px; }
   .layer h3 {
     margin: 0 0 6px; font-size: 12px; color: var(--muted);
     text-transform: uppercase; letter-spacing: .06em;
@@ -76,7 +127,6 @@
     background: rgba(217,154,78,.08); border-radius: 4px;
     font-size: 13px; margin: 6px 0;
   }
-  .empty { color: var(--muted); font-size: 13px; font-style: italic; }
   form.narr { display: flex; flex-direction: column; gap: 8px; }
   form.narr input, form.narr textarea, form.narr select {
     background: #0d0d12; color: var(--text);
@@ -95,8 +145,7 @@
   .log .ok { color: var(--ok); }
   .log .err { color: var(--err); }
   @media (max-width: 900px) {
-    main { grid-template-columns: 1fr; }
-    .stream { max-height: 45vh; }
+    main.dash { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -107,41 +156,71 @@
   <nav class="routes" id="routes"></nav>
 </header>
 
-<main>
-  <section>
+<!-- 玩家对话框（/player/:role） -->
+<main class="chat" id="chatMain" style="display:none">
+  <div class="stream" id="stream"></div>
+  <div class="composer">
+    <div class="chips" id="chips">
+      <span class="hint">…</span>
+    </div>
+    <div class="inputrow">
+      <textarea id="chatInput" placeholder="自主输入你想做的事，或点上面 LLM 给的选项…（Enter 发送，Shift+Enter 换行）"></textarea>
+      <button id="sendBtn" type="button">发送</button>
+    </div>
+    <div class="busy" id="busy"></div>
+  </div>
+</main>
+
+<!-- GM 仪表盘（/gm） -->
+<main class="dash" id="dashMain" style="display:none">
+  <section class="wide">
     <h2>事件流（账本）</h2>
-    <div class="stream" id="stream"><div class="empty">加载中…</div></div>
+    <div class="log" id="dashStream" style="margin-top:0"></div>
   </section>
 
   <section>
-    <h2>面板 <span id="roleName" style="color:var(--accent)"></span></h2>
+    <h2>面板 <span id="roleName" style="color:var(--accent)">· GM</span></h2>
     <div class="layers" id="layers"><div class="empty">加载中…</div></div>
   </section>
 
   <section>
-    <h2>行动 / 叙事输入</h2>
+    <h2>缺席简报（rumor 层 description）</h2>
+    <form class="narr" id="briefForm">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <input id="bRole" placeholder="查看哪个角色的简报，如 B" required />
+      </div>
+      <button type="submit">查看</button>
+    </form>
+    <div class="log" id="brief"></div>
+  </section>
+
+  <section>
+    <h2>数值结算（引擎直写）</h2>
     <form class="narr" id="settleForm">
-      <label>数值结算（settle）</label>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         <input id="sActor" placeholder="角色，如 A" required />
         <input id="sFact" placeholder="fact_ref，如 突破成功率" required />
       </div>
       <textarea id="sInputs" placeholder='inputs JSON，如 {"悟性":100,"气运":50,"体魄":200}'></textarea>
       <button type="submit">提交结算</button>
-    </form>
-    <form class="narr" id="narrForm" style="margin-top:12px">
-      <label>叙事生成（narrative，写入 proposals 分区）</label>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <input id="nRole" placeholder="角色，如 A" required />
-        <input id="nFact" placeholder="fact_ref（可选）" />
-      </div>
-      <input id="nSlice" placeholder="世界书切片（可选，原文段）" />
-      <button type="submit" id="nBtn">生成叙事</button>
-      <div class="log" id="log"></div>
+      <div class="log" id="sLog"></div>
     </form>
   </section>
 
   <section>
+    <h2>叙事调试（proposals 分区）</h2>
+    <form class="narr" id="narrForm">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <input id="nRole" placeholder="角色，如 A" required />
+        <input id="nFact" placeholder="fact_ref（可选）" />
+      </div>
+      <textarea id="nSlice" placeholder="世界书切片（可选，原文段）"></textarea>
+      <button type="submit" id="nBtn">生成叙事</button>
+      <div class="log" id="nLog"></div>
+    </form>
+  </section>
+
+  <section class="wide">
     <h2>LLM 配置（009 Q3 单点网关）</h2>
     <div class="log" id="llmStatus" style="margin-bottom:8px">加载中…</div>
     <form class="narr" id="llmForm" style="display:flex;flex-direction:column;gap:8px">
@@ -158,23 +237,15 @@
       <div class="log" id="llmLog"></div>
     </form>
   </section>
-
-  <section>
-    <h2>缺席简报（rumor 层 description）</h2>
-    <form class="narr" id="briefForm">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <input id="bRole" placeholder="查看哪个角色的简报，如 B" required />
-      </div>
-      <button type="submit">查看</button>
-    </form>
-    <div class="log" id="brief"></div>
-  </section>
 </main>
 
 <script>
 const $ = (id) => document.getElementById(id);
 const routes = [];
 let currentRole = "A";
+let isGM = false;
+let lastLedgerLen = 0;      // 聊天流增量：只渲染新增事件
+let lastProposalSeq = 0;     // 已渲染的 proposal 数量
 
 async function api(path, opts) {
   const r = await fetch(path, opts);
@@ -187,17 +258,24 @@ async function api(path, opts) {
 
 function pickRole() {
   const m = location.pathname.match(/^\/player\/([A-Za-z0-9_]+)$/);
-  if (m) currentRole = m[1];
+  if (location.pathname === "/gm" || location.pathname === "/" ) { isGM = true; currentRole = "GM"; }
+  else if (m) { isGM = false; currentRole = m[1]; }
   else {
     const q = new URLSearchParams(location.search).get("role");
-    if (q) currentRole = q;
+    isGM = false;
+    currentRole = q || "A";
   }
-  document.getElementById("roleName").textContent = "· " + currentRole;
+  $("chatMain").style.display = isGM ? "none" : "";
+  $("dashMain").style.display = isGM ? "" : "none";
+  if (isGM) {
+    $("roleName").textContent = "· GM";
+    renderDashStream();
+  }
   renderRoutes();
 }
 
 function renderRoutes() {
-  const nav = document.getElementById("routes");
+  const nav = $("routes");
   nav.innerHTML = "";
   for (const r of routes) {
     const a = document.createElement("a");
@@ -209,129 +287,226 @@ function renderRoutes() {
   }
 }
 
-function renderStream(ledger) {
-  const box = document.getElementById("stream");
+// ---------- 聊天流（玩家） ----------
+function renderChatStream(ledger) {
+  const box = $("stream");
   const all = [
     ...ledger.events.map((e) => ({ ...e, side: false })),
     ...ledger.sideBranches.map((e) => ({ ...e, side: true })),
   ].sort((a, b) => a.seq - b.seq);
 
-  if (!all.length) { box.innerHTML = '<div class="empty">账本为空，先提交一次结算。</div>'; return; }
-  box.innerHTML = all.map((e) => {
-    const tag = e.side ? ' <span class="tag">' + (e.reason_code || "side") + "</span>" : "";
+  // 全量重建（MVP 数据量小；>1000 条再做增量）
+  const parts = [];
+  for (const e of all) {
+    const tag = e.side ? ' <span class="side-tag">' + (e.reason_code || "side") + "</span>" : "";
     const val = typeof e.value === "object" ? JSON.stringify(e.value) : String(e.value);
     const radius = e.propagation_radius === "all" ? "公开" : "[" + String(e.propagation_radius) + "]";
-    return '<div class="ev' + (e.side ? " side" : "") + '">' +
-      '<div class="seq">#' + e.seq + '<br>' + e.kind + '</div>' +
-      '<div class="body">' + e.fact_ref + " = " + val + tag +
-      '<br><span style="color:var(--muted)">' + e.actor + " · " + radius + " · " + e.canon_status + "</span></div></div>";
-  }).join("");
+    parts.push(
+      '<div class="msg event' + (e.side ? " side" : "") + '">' +
+      '<b>#' + e.seq + "</b> " + e.kind + " · " + e.fact_ref + " = " + val + tag +
+      '<div class="who" style="margin-top:2px">' + e.actor + " · " + radius + " · " + e.canon_status + "</div>" +
+      "</div>"
+    );
+  }
+  // proposals（LLM 叙事）按 at_seq 插入对应事件后
+  for (const p of (ledger.proposals || [])) {
+    const el = document.createElement("div");
+    el.className = "msg narr";
+    el.innerHTML = '<div class="who">叙事 · ' + p.role + " · " + p.provider + "</div>" +
+      '<div class="body">' + escapeHtml(p.narrative) + "</div>" +
+      (p.suggested_value !== null && p.suggested_value !== undefined ?
+        '<div class="prop">建议值（未生效，引擎才是结算者）：' + escapeHtml(JSON.stringify(p.suggested_value)) + "</div>" : "");
+    box.appendChild(el);
+  }
+  // 事件消息 + 叙事消息交错（叙事挂到 at_seq 之后）
+  box.innerHTML = "";
+  let pi = 0;
+  const props = ledger.proposals || [];
+  for (const e of all) {
+    box.insertAdjacentHTML("beforeend", parts.find ? "" : ""); // placeholder (unused)
+  }
+  // 简化：事件先全部渲染，叙事按 at_seq 顺序追加在末尾
+  box.innerHTML = parts.join("") || '<div class="empty">账本为空——输入框写下你的第一步，或点 LLM 选项。</div>';
+  for (const p of props) {
+    const el = document.createElement("div");
+    el.className = "msg narr";
+    el.innerHTML = '<div class="who">叙事 · ' + p.role + " · " + p.provider + "</div>" +
+      '<div class="body">' + escapeHtml(p.narrative) + "</div>" +
+      (p.suggested_value !== null && p.suggested_value !== undefined ?
+        '<div class="prop">建议值（未生效，引擎才是结算者）：' + escapeHtml(JSON.stringify(p.suggested_value)) + "</div>" : "");
+    box.appendChild(el);
+  }
   box.scrollTop = box.scrollHeight;
 }
 
-function renderLayers(view) {
-  const box = document.getElementById("layers");
-  const l = view.layers || {};
-  const mk = (title, obj) => {
-    const keys = Object.keys(obj || {});
-    if (!keys.length) return '<div class="layer"><h3>' + title + '</h3><div class="empty">（无）</div></div>';
-    let body = "";
-    for (const k of keys) {
-      const v = obj[k];
-      body += "<div class='kv'><b>" + k + "</b><span>" +
-        (v && typeof v === "object" ? JSON.stringify(v) : v) + "</span></div>";
-    }
-    return '<div class="layer"><h3>' + title + "</h3>" + body + "</div>";
-  };
-  const parts = [];
-  parts.push(mk("公开层 public", l.public));
-  parts.push(mk("私有层 private", l.private));
-  if (l.rumor && Object.keys(l.rumor).length) {
-    const rumors = Object.entries(l.rumor).map(([k, v]) =>
-      '<div class="rumor"><b>' + k + "</b>（" + v.blur_level + "）" + v.description + "</div>").join("");
-    parts.push('<div class="layer"><h3>传闻层 rumor</h3>' + rumors + "</div>");
-  } else {
-    parts.push('<div class="layer"><h3>传闻层 rumor</h3><div class="empty">（无）</div></div>');
-  }
-  box.innerHTML = parts.join("");
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function renderDashStream() {
+  api("/api/ledger").then((ledger) => {
+    const all = [
+      ...ledger.events.map((e) => ({ ...e, side: false })),
+      ...ledger.sideBranches.map((e) => ({ ...e, side: true })),
+    ].sort((a, b) => a.seq - b.seq);
+    $("dashStream").innerHTML = all.map((e) => {
+      const tag = e.side ? ' <span class="side-tag">' + (e.reason_code || "side") + "</span>" : "";
+      const val = typeof e.value === "object" ? JSON.stringify(e.value) : String(e.value);
+      return '<div class="msg event' + (e.side ? " side" : "") + '" style="align-self:flex-start;max-width:100%">#' +
+        e.seq + " · " + e.kind + " · " + e.fact_ref + " = " + val + tag +
+        '<div class="who">' + e.actor + " · " + e.canon_status + "</div></div>";
+    }).join("") || '<div class="empty">账本为空</div>';
+  }).catch(() => {});
 }
 
 async function refresh() {
   try {
-    const [root, ledger, panel] = await Promise.all([
-      api("/"),
-      api("/api/ledger"),
-      api("/api/panel/" + encodeURIComponent(currentRole)),
-    ]);
+    const [root, ledger] = await Promise.all([api("/"), api("/api/ledger")]);
     routes.length = 0;
     for (const r of root.roles || []) routes.push(r);
-    if (!routes.includes(currentRole) && routes.includes("A")) currentRole = "A";
-    document.getElementById("meta").textContent =
+    if (!isGM && !routes.includes(currentRole) && routes.includes("A")) currentRole = "A";
+    $("meta").textContent =
       "seq " + root.seq + " · schema " + root.schema_version + " · LLM " + root.llm + " · 自动刷新 3s";
     renderRoutes();
-    renderStream(ledger);
-    renderLayers(panel);
+    if (!isGM) {
+      renderChatStream(ledger);
+      // 选项不随 3s 轮询重拉（省 LLM 调用）；只在首次加载与每次叙事后按需刷新
+    } else {
+      renderDashStream();
+    }
   } catch (e) {
-    document.getElementById("meta").textContent = "服务器未连接：" + e.message;
+    $("meta").textContent = "服务器未连接：" + e.message;
   }
 }
 
-document.getElementById("settleForm").onsubmit = async (e) => {
+let promptsLoaded = false;
+function maybeLoadPrompts(force) {
+  if (!isGM && (force || !promptsLoaded)) { promptsLoaded = true; loadPrompts(); }
+}
+
+// ---------- 3 个 LLM 快捷选项 ----------
+async function loadPrompts() {
+  const box = $("chips");
+  try {
+    const r = await api("/api/prompts/" + encodeURIComponent(currentRole));
+    const keys = Object.keys(r.prompts || {});
+    if (!keys.length) {
+      box.innerHTML = '<span class="hint">LLM 未给出选项（可自主输入）</span>';
+      return;
+    }
+    box.innerHTML = keys.map((k) => '<button class="chip" data-p="' + escapeHtml(k) + '">' + escapeHtml(k) + "</button>").join("");
+    for (const b of box.querySelectorAll(".chip")) {
+      b.onclick = () => sendNarrative(b.dataset.p);
+    }
+  } catch {
+    box.innerHTML = '<span class="hint">选项加载失败（可自主输入）</span>';
+  }
+}
+
+async function sendNarrative(text) {
+  if (!text || !text.trim()) return;
+  $("busy").textContent = "叙事生成中…";
+  const ta = $("chatInput");
+  ta.value = "";
+  // 本地先插入玩家气泡
+  const box = $("stream");
+  const p = document.createElement("div");
+  p.className = "msg player";
+  p.innerHTML = '<div class="who">你（' + currentRole + '）</div><div class="body">' + escapeHtml(text) + "</div>";
+  box.appendChild(p);
+  box.scrollTop = box.scrollHeight;
+
+  try {
+    await api("/api/narrative/" + encodeURIComponent(currentRole), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+    $("busy").textContent = "";
+    promptsLoaded = false;
+    await refresh(); // 拉回最新账本+叙事
+    maybeLoadPrompts(true); // 故事推进后重新生成 3 个选项
+  } catch (e) {
+    $("busy").textContent = "";
+    box.insertAdjacentHTML("beforeend", '<div class="msg event" style="border-color:var(--err)">叙事失败：' + escapeHtml(e.message) + "</div>");
+    box.scrollTop = box.scrollHeight;
+  }
+}
+
+$("sendBtn").onclick = () => {
+  const v = $("chatInput").value;
+  sendNarrative(v);
+};
+$("chatInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    $("sendBtn").click();
+  }
+});
+
+// ---------- GM 仪表盘各表单 ----------
+function log(el, msg, isErr) {
+  el.innerHTML = '<div class="' + (isErr ? "err" : "ok") + '">' + escapeHtml(msg) + "</div>" + el.innerHTML;
+}
+
+$("settleForm").onsubmit = async (e) => {
   e.preventDefault();
   let inputs = {};
-  const raw = document.getElementById("sInputs").value.trim();
-  if (raw) { try { inputs = JSON.parse(raw); } catch { log("inputs 不是合法 JSON", true); return; } }
+  const raw = $("sInputs").value.trim();
+  if (raw) { try { inputs = JSON.parse(raw); } catch { log($("sLog"), "inputs 不是合法 JSON", true); return; } }
   try {
     const r = await api("/api/settle", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        actor: document.getElementById("sActor").value || currentRole,
-        fact_ref: document.getElementById("sFact").value,
-        inputs,
-      }),
+      body: JSON.stringify({ actor: $("sActor").value || "GM", fact_ref: $("sFact").value, inputs }),
     });
-    log(r.ok ? "结算成功 seq=" + r.seq + " → " + JSON.stringify(r.result) : "结算拒绝：" + r.reason, !r.ok);
+    log($("sLog"), r.ok ? "结算成功 seq=" + r.seq + " → " + JSON.stringify(r.result) : "结算拒绝：" + r.reason, !r.ok);
     refresh();
-  } catch (err) { log("settle 失败：" + err.message, true); }
+  } catch (err) { log($("sLog"), "settle 失败：" + err.message, true); }
 };
 
-document.getElementById("narrForm").onsubmit = async (e) => {
+$("narrForm").onsubmit = async (e) => {
   e.preventDefault();
-  const btn = document.getElementById("nBtn");
-  btn.disabled = true;
+  $("nBtn").disabled = true;
   try {
-    const r = await api("/api/narrative/" + encodeURIComponent(document.getElementById("nRole").value || currentRole), {
+    const r = await api("/api/narrative/" + encodeURIComponent($("nRole").value || "A"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        fact_ref: document.getElementById("nFact").value.trim() || undefined,
-        worldbookSlice: document.getElementById("nSlice").value.trim() || undefined,
+        fact_ref: $("nFact").value.trim() || undefined,
+        worldbookSlice: $("nSlice").value.trim() || undefined,
       }),
     });
     const p = r.proposal;
-    log('叙事已入 proposals（at_seq=' + p.at_seq + '，' + p.usage.inputTokens + '/' + p.usage.outputTokens + ' tokens）：' + p.narrative, false);
+    log($("nLog"), '叙事已入 proposals（at_seq=' + p.at_seq + "，" + p.usage.inputTokens + "/" + p.usage.outputTokens + " tokens）：" + p.narrative, false);
     refresh();
-  } catch (err) { log("narrative 失败：" + err.message, true); }
-  finally { btn.disabled = false; }
+  } catch (err) { log($("nLog"), "narrative 失败：" + err.message, true); }
+  $("nBtn").disabled = false;
+};
+
+$("briefForm").onsubmit = async (e) => {
+  e.preventDefault();
+  try {
+    const r = await api("/api/briefing/" + encodeURIComponent($("bRole").value));
+    const items = r.items.map((i) => "· " + i.render).join("\n");
+    $("brief").innerHTML = items ? "<pre style='white-space:pre-wrap;font-size:13px'>" + escapeHtml(items) + "</pre>" : '<span class="ok">该角色当前无 rumor 层条目。</span>';
+  } catch (err) { $("brief").textContent = "briefing 失败：" + err.message; }
 };
 
 async function loadLlmConfig() {
   try {
     const r = await api("/api/config/llm");
-    document.getElementById("llmStatus").textContent = "当前：" + (r.current.provider ?? "unknown") + " · live " + r.live;
+    $("llmStatus").textContent = "当前：" + (r.current.provider ?? "unknown") + " · live " + r.live;
     if (r.current.provider === "openai-compatible") {
-      document.getElementById("llmProvider").value = "openai-compatible";
-      document.getElementById("llmBaseUrl").value = r.current.baseUrl || "";
-      document.getElementById("llmApiKey").value = r.current.apiKey || "";
-      document.getElementById("llmModel").value = r.current.model && r.current.model !== "gpt-4o-mini" ? r.current.model : "";
+      $("llmProvider").value = "openai-compatible";
+      $("llmBaseUrl").value = r.current.baseUrl || "";
+      $("llmApiKey").value = r.current.apiKey || "";
+      $("llmModel").value = r.current.model && r.current.model !== "gpt-4o-mini" ? r.current.model : "";
     }
-  } catch { /* server not ready */ }
+  } catch {}
 }
-loadLlmConfig();
-setInterval(loadLlmConfig, 10000);
 
-document.getElementById("llmForm").onsubmit = async (e) => {
+$("llmForm").onsubmit = async (e) => {
   e.preventDefault();
   const btn = e.target.querySelector("button");
   btn.disabled = true;
@@ -340,37 +515,60 @@ document.getElementById("llmForm").onsubmit = async (e) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        provider: document.getElementById("llmProvider").value,
-        baseUrl: document.getElementById("llmBaseUrl").value.trim() || undefined,
-        apiKey: document.getElementById("llmApiKey").value.trim() || undefined,
-        model: document.getElementById("llmModel").value.trim() || undefined,
+        provider: $("llmProvider").value,
+        baseUrl: $("llmBaseUrl").value.trim() || undefined,
+        apiKey: $("llmApiKey").value.trim() || undefined,
+        model: $("llmModel").value.trim() || undefined,
       }),
     });
-    document.getElementById("llmLog").innerHTML = '<div class="ok">已切换 → ' + r.live + "</div>";
+    log($("llmLog"), "已切换 → " + r.live, false);
     refresh();
-  } catch (err) {
-    document.getElementById("llmLog").innerHTML = '<div class="err">' + err.message + "</div>";
-  }
+  } catch (err) { log($("llmLog"), err.message, true); }
   btn.disabled = false;
 };
 
-document.getElementById("briefForm").onsubmit = async (e) => {
-  e.preventDefault();
+// 面板（GM 视图三层）—— 玩家页不再显示三层面板，改在 GM 页
+async function renderPanel() {
   try {
-    const r = await api("/api/briefing/" + encodeURIComponent(document.getElementById("bRole").value));
-    const items = r.items.map((i) => "· " + i.render).join("\n");
-    document.getElementById("brief").innerHTML = items ? items : '<span class="ok">该角色当前无 rumor 层条目。</span>';
-  } catch (err) { document.getElementById("brief").textContent = "briefing 失败：" + err.message; }
-};
-
-function log(msg, isErr) {
-  const el = document.getElementById("log");
-  el.innerHTML = '<div class="' + (isErr ? "err" : "ok") + '">' + msg + "</div>" + el.innerHTML;
+    const panel = await api("/api/panel/GM");
+    const l = panel.layers || {};
+    const mk = (title, obj) => {
+      const keys = Object.keys(obj || {});
+      if (!keys.length) return '<div class="layer"><h3>' + title + '</h3><div class="empty">（无）</div></div>';
+      let body = "";
+      for (const k of keys) {
+        const v = obj[k];
+        body += "<div class='kv'><b>" + k + "</b><span>" +
+          (v && typeof v === "object" ? JSON.stringify(v) : v) + "</span></div>";
+      }
+      return '<div class="layer"><h3>' + title + "</h3>" + body + "</div>";
+    };
+    const parts = [
+      mk("公开层 public", l.public),
+      mk("私有层 private", l.private),
+    ];
+    if (l.rumor && Object.keys(l.rumor).length) {
+      const rumors = Object.entries(l.rumor).map(([k, v]) =>
+        '<div class="rumor"><b>' + k + "</b>（" + v.blur_level + '）' + v.description + "</div>").join("");
+      parts.push('<div class="layer"><h3>传闻层 rumor</h3>' + rumors + "</div>");
+    } else {
+      parts.push('<div class="layer"><h3>传闻层 rumor</h3><div class="empty">（无）</div></div>');
+    }
+    $("layers").innerHTML = parts.join("");
+  } catch {}
 }
 
 pickRole();
 refresh();
-setInterval(refresh, 3000);
+maybeLoadPrompts(false);
+if (isGM) {
+  renderPanel();
+  setInterval(renderPanel, 3000);
+  loadLlmConfig();
+  setInterval(loadLlmConfig, 10000);
+} else {
+  setInterval(refresh, 3000);
+}
 </script>
 </body>
 </html>
