@@ -6,14 +6,14 @@
 <title>共典</title>
 <style>
   :root {
-    --paper: #faf6ef;
-    --paper-deep: #f3ede3;
+    --paper: #ede4d4;
+    --paper-deep: #e2d8c8;
     --ink: #2a2420;
-    --ink-soft: #5a5248;
-    --ink-faint: #8a8278;
-    --sienna: #c45d3a;
-    --sienna-soft: #e8c4b4;
-    --sienna-wash: #fdf5f0;
+    --ink-soft: #4a4438;
+    --ink-faint: #5a5248;
+    --sienna: #a04028;
+    --sienna-soft: #d4a898;
+    --sienna-wash: #f5e8e0;
     --cool: #e8edf2;
     --cool-ink: #3a4a5a;
     --amber: #f5e6d0;
@@ -77,13 +77,9 @@
   .msg.narr {
     align-self: flex-start;
     background: #fff; border: 1px solid var(--line);
+    border-top: 3px solid var(--sienna);
     font-family: var(--font-narr); font-size: 15px; color: var(--ink);
     box-shadow: 0 2px 8px rgba(42,36,32,.06);
-    position: relative;
-  }
-  .msg.narr::before {
-    content: ""; position: absolute; left: 0; top: 0; bottom: 0;
-    width: 3px; background: var(--sienna); border-radius: 4px 0 0 4px;
   }
   .msg.player {
     align-self: flex-end;
@@ -136,7 +132,7 @@
     border-radius: 6px; padding: 0 24px; font: inherit; font-weight: 600; cursor: pointer;
     transition: background .15s;
   }
-  .inputrow button:hover { background: #a84d30; }
+  .inputrow button:hover { background: #7a3020; }
   .inputrow button:disabled { opacity: .5; cursor: default; }
   .busy { color: var(--ink-faint); font-size: 12px; text-align: right; font-style: italic; font-family: var(--font-narr); }
 
@@ -150,7 +146,7 @@
     text-transform: uppercase; letter-spacing: .08em; font-weight: 600;
   }
   .layer { margin-bottom: 14px; padding: 10px 12px; border-radius: 4px; }
-  .layer.pub { background: #fff; border: 1px solid var(--line); }
+  .layer.pub { background: #faf7f0; border: 1px solid var(--line); }
   .layer.priv { background: var(--cool); border: 1px solid #c8d4e0; }
   .layer.rum { background: var(--amber); border: 1px dashed var(--amber-line); }
   .layer h4 {
@@ -212,7 +208,7 @@
     border-radius: 4px; padding: 8px 20px; font: inherit; font-weight: 600; cursor: pointer;
     transition: background .15s;
   }
-  form.narr button:hover { background: #a84d30; }
+  form.narr button:hover { background: #7a3020; }
   form.narr button:disabled { opacity: .5; cursor: default; }
   .log { margin-top: 8px; font-size: 12px; color: var(--ink-soft); word-break: break-word; }
   .log .ok { color: var(--ok); }
